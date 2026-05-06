@@ -8,18 +8,27 @@ import traceback
 import logging
 from django.conf import settings
 
-# Инициализация JVM только один раз
+# Явная настройка JAVA_HOME перед любым импортом asposecells
+import os as _os
+if not _os.environ.get('JAVA_HOME'):
+    _os.environ['JAVA_HOME'] = '/usr/lib/jvm/java-21-openjdk-amd64'
+
+# Инициализация JVM только один раз ПЕРЕД любыми другими импортами asposecells
+_jvm_initialized = False
 try:
-    from jpype import isJVMStarted
-    if not isJVMStarted():
+    import jpype
+    if not jpype.isJVMStarted():
         import asposecells
-        asposecells.startJVM()
+        # Явно указываем путь к libjvm.so через параметры запуска
+        jvm_path = jpype.getDefaultJVMPath()
+        asposecells.startJVM(jvm_path)
+        _jvm_initialized = True
         # Настраиваем пути к шрифтам
-        import jpype
         jpype.JClass('java.lang.System').setProperty('aspose.fonts.dir', '/usr/share/fonts')
 except Exception as e:
     logging.warning(f"Предупреждение при инициализации JVM: {e}")
 
+# Теперь импортируем API только после успешного запуска JVM
 from asposecells.api import Workbook, SaveFormat, PdfSaveOptions
 
 logger = logging.getLogger(__name__)
