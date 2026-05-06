@@ -41,7 +41,7 @@ class ActInputForm(forms.ModelForm):
     class Meta:
         model = ActInput
         fields = [
-            'act_type', 'document_number', 'contract_number', 'contract_date',
+            'document_number', 'contract_number', 'contract_date',
             'report_from', 'report_to',
             'investor', 'investor_okpo', 'customer', 'customer_okpo',
             'construction', 'object_name', 'operation',

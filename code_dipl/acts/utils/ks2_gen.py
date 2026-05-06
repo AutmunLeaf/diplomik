@@ -3,8 +3,9 @@
 Использует твой оригинальный код с ks2.py + добавляет поддержку XLSX.
 """
 import os
-import aspose.cells as ac
-from aspose.cells import SaveFormat
+import asposecells
+asposecells.startJVM()
+from asposecells.api import Workbook, SaveFormat, PdfSaveOptions
 import gc
 import traceback
 import logging
@@ -28,9 +29,20 @@ def fill_ks2(template_path, output_path, data, format='pdf'):
     """
     wb = None
     try:
-        # 1. Инициализация Aspose.Cells
-        wb = ac.Workbook(template_path)
-        ws = wb.worksheets[0]
+        # 1. Инициализация Aspose.Cells с настройкой шрифтов
+        font_dirs = [
+            "/usr/share/fonts",
+            "/usr/local/share/fonts",
+            "/home/vscode/.local/share/fonts",
+            "/root/.local/share/fonts",
+        ]
+        # Устанавливаем пути к шрифтам перед созданием Workbook
+        from com.aspose.cells import CellsHelper
+        CellsHelper.setFontDirs(font_dirs)
+        logger.info(f" Настроены папки со шрифтами: {font_dirs}")
+        
+        wb = Workbook(template_path)
+        ws = wb.getWorksheets().get(0)
 
         vat_rate = float(str(data.get("vat_rate", "20%")).replace('%', '')) / 100
         
@@ -172,7 +184,13 @@ def fill_ks2(template_path, output_path, data, format='pdf'):
             wb.save(output_path, SaveFormat.XLSX)
             logger.info(f" XLSX сохранён: {output_path}")
         else:
-            wb.save(output_path, SaveFormat.PDF)
+            # Настройки PDF для корректного отображения на Linux
+            pdf_options = PdfSaveOptions()
+            pdf_options.one_page_per_sheet = False
+            pdf_options.all_columns_in_one_page_for_sheet = True
+            pdf_options.is_template = False
+            
+            wb.save(output_path, SaveFormat.PDF, pdf_options)
             logger.info(f" PDF сохранён: {output_path}")
         
         logger.info(f" Заполнено работ: {len(works)}")
