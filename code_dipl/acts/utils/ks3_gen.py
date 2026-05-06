@@ -4,7 +4,7 @@
 """
 import os
 import aspose.cells as ac
-from aspose.cells import SaveFormat
+from aspose.cells import SaveFormat, PdfSaveOptions
 import gc
 import traceback
 import logging
@@ -28,7 +28,16 @@ def fill_ks3(template_path, output_path, data, format='pdf'):
     """
     wb = None
     try:
-        # 1. Инициализация
+        # 1. Инициализация с настройкой шрифтов
+        font_dirs = [
+            "/usr/share/fonts",
+            "/usr/local/share/fonts",
+            "/home/vscode/.local/share/fonts",
+            "/root/.local/share/fonts",
+        ]
+        ac.FontsUpdater.set_fonts_folders(font_dirs)
+        logger.info(f" Настроены папки со шрифтами: {font_dirs}")
+        
         wb = ac.Workbook(template_path)
         ws = wb.worksheets[0]
         
@@ -112,7 +121,13 @@ def fill_ks3(template_path, output_path, data, format='pdf'):
             wb.save(output_path, SaveFormat.XLSX)
             logger.info(f" XLSX сохранён: {output_path}")
         else:
-            wb.save(output_path, SaveFormat.PDF)
+            # Настройки PDF для корректного отображения на Linux
+            pdf_options = PdfSaveOptions()
+            pdf_options.one_page_per_sheet = False
+            pdf_options.all_columns_in_one_page_for_sheet = True
+            pdf_options.is_template = False
+            
+            wb.save(output_path, SaveFormat.PDF, pdf_options)
             logger.info(f" PDF сохранён: {output_path}")
         
         logger.info(f" Заполнено работ: {len(works)} из 14")
