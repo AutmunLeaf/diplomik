@@ -3,8 +3,9 @@
 Использует твой оригинальный код с ks3.py + добавляет поддержку XLSX.
 """
 import os
-import aspose.cells as ac
-from aspose.cells import SaveFormat, PdfSaveOptions
+import asposecells
+asposecells.startJVM()
+from asposecells.api import Workbook, SaveFormat, PdfSaveOptions
 import gc
 import traceback
 import logging
@@ -29,42 +30,39 @@ def fill_ks3(template_path, output_path, data, format='pdf'):
     wb = None
     try:
         # 1. Инициализация с настройкой шрифтов
-        font_dirs = [
-            "/usr/share/fonts",
-            "/usr/local/share/fonts",
-            "/home/vscode/.local/share/fonts",
-            "/root/.local/share/fonts",
-        ]
-        ac.FontsUpdater.set_fonts_folders(font_dirs)
-        logger.info(f" Настроены папки со шрифтами: {font_dirs}")
+        font_dir = "/usr/share/fonts"
+        # Устанавливаем пути к шрифтам через системное свойство Java
+        import jpype
+        jpype.JClass('java.lang.System').setProperty('aspose.fonts.dir', font_dir)
+        logger.info(f" Настроена папка со шрифтами: {font_dir}")
         
-        wb = ac.Workbook(template_path)
-        ws = wb.worksheets[0]
+        wb = Workbook(template_path)
+        ws = wb.getWorksheets().get(0)
         
         # 2. Заполнение шапки
-        ws.cells.get("F7").put_value(data.get("investor", "     "))
-        ws.cells.get("M9").put_value(data.get("customer", "     "))
-        ws.cells.get("N11").put_value(data.get("contractor", "     "))
-        ws.cells.get("E13").put_value(data.get("construction", "     "))
-        ws.cells.get("X22").put_value(data.get("document_number", "     "))
-        ws.cells.get("AG22").put_value(data.get("contract_date", "     "))
-        ws.cells.get("AR22").put_value(data.get("report_from", "     "))
-        ws.cells.get("AW22").put_value(data.get("report_to", "     "))
-        ws.cells.get("AP6").put_value(data.get("okpo_investor", "     "))
-        ws.cells.get("AP8").put_value(data.get("okpo_customer", "     "))
-        ws.cells.get("AP10").put_value(data.get("okpo_contractor", "     "))
-        ws.cells.get("AP14").put_value(data.get("okdp", "     "))
-        ws.cells.get("AP16").put_value(data.get("contract_number", "     "))
-        ws.cells.get("AP17").put_value(data.get("day_contract", "     "))
-        ws.cells.get("AT17").put_value(data.get("month_contract", "     "))
-        ws.cells.get("AX17").put_value(data.get("year_contract", "     "))
-        ws.cells.get("AP18").put_value(data.get("operation", "     "))
+        ws.getCells().get("F7").putValue(data.get("investor", "     "))
+        ws.getCells().get("M9").putValue(data.get("customer", "     "))
+        ws.getCells().get("N11").putValue(data.get("contractor", "     "))
+        ws.getCells().get("E13").putValue(data.get("construction", "     "))
+        ws.getCells().get("X22").putValue(data.get("document_number", "     "))
+        ws.getCells().get("AG22").putValue(data.get("contract_date", "     "))
+        ws.getCells().get("AR22").putValue(data.get("report_from", "     "))
+        ws.getCells().get("AW22").putValue(data.get("report_to", "     "))
+        ws.getCells().get("AP6").putValue(data.get("okpo_investor", "     "))
+        ws.getCells().get("AP8").putValue(data.get("okpo_customer", "     "))
+        ws.getCells().get("AP10").putValue(data.get("okpo_contractor", "     "))
+        ws.getCells().get("AP14").putValue(data.get("okdp", "     "))
+        ws.getCells().get("AP16").putValue(data.get("contract_number", "     "))
+        ws.getCells().get("AP17").putValue(data.get("day_contract", "     "))
+        ws.getCells().get("AT17").putValue(data.get("month_contract", "     "))
+        ws.getCells().get("AX17").putValue(data.get("year_contract", "     "))
+        ws.getCells().get("AP18").putValue(data.get("operation", "     "))
         
         # 3. Подписи
-        ws.cells.get("N48").put_value(data.get("surrender_position", "     "))
-        ws.cells.get("AJ49").put_value(data.get("surrender_signature", "     "))
-        ws.cells.get("N53").put_value(data.get("accept_position", "     "))
-        ws.cells.get("AJ54").put_value(data.get("accept_signature", "     "))
+        ws.getCells().get("N48").putValue(data.get("surrender_position", "     "))
+        ws.getCells().get("AJ49").putValue(data.get("surrender_signature", "     "))
+        ws.getCells().get("N53").putValue(data.get("accept_position", "     "))
+        ws.getCells().get("AJ54").putValue(data.get("accept_signature", "     "))
         
         # 4. Заполнение работ (макс 14)
         start_row = 31
@@ -78,41 +76,41 @@ def fill_ks3(template_path, output_path, data, format='pdf'):
         # Очистка
         for r in range(start_row, end_row + 1):
             for c in range(50):
-                ws.cells.get(r - 1, c).put_value("    ")
+                ws.getCells().get(r - 1, c).putValue("    ")
         
         # Заполнение
         row = start_row
         total_report_period = 0
         
         for i, work in enumerate(works, start=1):
-            ws.cells.get(row - 1, 0).put_value(i)
-            ws.cells.get(row - 1, 3).put_value(work.get("name", "     "))
-            ws.cells.get(row - 1, 26).put_value(work.get("code", "     "))
-            ws.cells.get(row - 1, 30).put_value(work.get("cost_from_start", 0))
-            ws.cells.get(row - 1, 37).put_value(work.get("cost_from_year", 0))
+            ws.getCells().get(row - 1, 0).putValue(i)
+            ws.getCells().get(row - 1, 3).putValue(work.get("name", "     "))
+            ws.getCells().get(row - 1, 26).putValue(work.get("code", "     "))
+            ws.getCells().get(row - 1, 30).putValue(work.get("cost_from_start", 0))
+            ws.getCells().get(row - 1, 37).putValue(work.get("cost_from_year", 0))
             
             cost_period = work.get("cost_report_period", 0)
-            ws.cells.get(row - 1, 45).put_value(cost_period)
+            ws.getCells().get(row - 1, 45).putValue(cost_period)
             total_report_period += cost_period
             row += 1
         
         # Итого
-        ws.cells.get(44, 45).put_value(total_report_period)
+        ws.getCells().get(44, 45).putValue(total_report_period)
         
         # НДС и итог с НДС
         vat_rate = float(str(data.get("vat_rate", "20%")).replace('%', '')) / 100
         vat_amount = total_report_period * vat_rate
         total_with_vat = total_report_period + vat_amount
         
-        ws.cells.get(45, 44).put_value(f"Сумма НДС {int(round(vat_rate * 100))}%")
-        ws.cells.get(45, 45).put_value(round(vat_amount, 2))
-        ws.cells.get(46, 45).put_value(round(total_with_vat, 2))
+        ws.getCells().get(45, 44).putValue(f"Сумма НДС {int(round(vat_rate * 100))}%")
+        ws.getCells().get(45, 45).putValue(round(vat_amount, 2))
+        ws.getCells().get(46, 45).putValue(round(total_with_vat, 2))
         
         # Удаляем пустые строки
         for r in range(44, start_row - 1, -1):
-            cell_val = ws.cells.get(r - 1, 3).value
+            cell_val = ws.getCells().get(r - 1, 3).getValue()
             if cell_val is None or str(cell_val).strip() in ("", " ", "", " "):
-                ws.cells.delete_rows(r - 1, 1)
+                ws.getCells().deleteRows(r - 1, 1)
         
         # 5. Экспорт
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
@@ -123,11 +121,10 @@ def fill_ks3(template_path, output_path, data, format='pdf'):
         else:
             # Настройки PDF для корректного отображения на Linux
             pdf_options = PdfSaveOptions()
-            pdf_options.one_page_per_sheet = False
-            pdf_options.all_columns_in_one_page_for_sheet = True
-            pdf_options.is_template = False
+            pdf_options.setOnePagePerSheet(False)
+            pdf_options.setAllColumnsInOnePagePerSheet(True)
             
-            wb.save(output_path, SaveFormat.PDF, pdf_options)
+            wb.save(output_path, pdf_options)
             logger.info(f" PDF сохранён: {output_path}")
         
         logger.info(f" Заполнено работ: {len(works)} из 14")
