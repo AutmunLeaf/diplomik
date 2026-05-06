@@ -3,13 +3,24 @@
 Использует твой оригинальный код с ks3.py + добавляет поддержку XLSX.
 """
 import os
-import asposecells
-asposecells.startJVM()
-from asposecells.api import Workbook, SaveFormat, PdfSaveOptions
 import gc
 import traceback
 import logging
 from django.conf import settings
+
+# Инициализация JVM только один раз
+try:
+    from jpype import isJVMStarted
+    if not isJVMStarted():
+        import asposecells
+        asposecells.startJVM()
+        # Настраиваем пути к шрифтам
+        import jpype
+        jpype.JClass('java.lang.System').setProperty('aspose.fonts.dir', '/usr/share/fonts')
+except Exception as e:
+    logging.warning(f"Предупреждение при инициализации JVM: {e}")
+
+from asposecells.api import Workbook, SaveFormat, PdfSaveOptions
 
 logger = logging.getLogger(__name__)
 
@@ -29,12 +40,8 @@ def fill_ks3(template_path, output_path, data, format='pdf'):
     """
     wb = None
     try:
-        # 1. Инициализация с настройкой шрифтов
-        font_dir = "/usr/share/fonts"
-        # Устанавливаем пути к шрифтам через системное свойство Java
-        import jpype
-        jpype.JClass('java.lang.System').setProperty('aspose.fonts.dir', font_dir)
-        logger.info(f" Настроена папка со шрифтами: {font_dir}")
+        # JVM и шрифты уже настроены при импорте модуля
+        logger.info(" Используем настроенные пути к шрифтам: /usr/share/fonts")
         
         wb = Workbook(template_path)
         ws = wb.getWorksheets().get(0)
